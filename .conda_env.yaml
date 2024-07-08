@@ -1,0 +1,9 @@
+name: medclassx
+channels:
+  - defaults
+dependencies:
+  - python=3.11.9
+  - pip=24.0
+  - pip:
+    - matplotlib
+    - -e ."[lint,test]"

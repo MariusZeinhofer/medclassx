@@ -1,0 +1,26 @@
+[project]
+name = "medclassx"
+version = "0.0.0"
+description = "Medical image analysis with jax."
+
+[project.optional-dependencies]
+lint = ["ruff"]
+test = ["pytest"]
+
+[tool.ruff]
+line-length = 88
+ignore = ["E731"] # E731: Do not assign a lambda expression, use a def
+src = []
+
+[tool.ruff.lint]
+select = ["E501", "I"]
+extend-select = [
+  "D",   # pydocstyle
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.format]
+docstring-code-format = true
+docstring-code-line-length = 88
