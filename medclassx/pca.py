@@ -1,6 +1,5 @@
 """Script to compute the principal components PC of a matrix."""
 
-
 import jax
 import jax.numpy as jnp
 import jax.random as random
@@ -18,14 +17,14 @@ def pca(X_train):
 
     Args:
         X_train: The training data of shape (n, p). Here, n is the number of training
-            samples and p is the feature dimension. 
-    
+            samples and p is the feature dimension.
+
     Returns:
         A tuple of functions and the singular values. The first functions transforms
             new data to the latent space and the second reverses this.
 
     Raises:
-        ValueError: If the number of training samples is larger than the number of 
+        ValueError: If the number of training samples is larger than the number of
             features.
     """
     if X_train.shape[0] > X_train.shape[1]:
@@ -56,11 +55,11 @@ def pca(X_train):
         """Transforms data into latent space.
 
         Args:
-            X: needs to be a tensor of shape (batch, p) where p is the dimension 
+            X: needs to be a tensor of shape (batch, p) where p is the dimension
                 of the feature space.
 
         Returns:
-            A tensor of shape (batch, n), the data in latent space. 
+            A tensor of shape (batch, n), the data in latent space.
         """
         return X @ W
 
@@ -69,7 +68,7 @@ def pca(X_train):
 
         Args:
             T: a tensor of shape (batch, n) representing data in latent space.
-        
+
         Returns:
             The data in the original space, a tensor of shape (batch, p), where
             p is the feature dimension.
@@ -80,7 +79,6 @@ def pca(X_train):
 
 
 if __name__ == "__main__":
-
     # Set the shape
     n, h, w, d = 3, 2, 2, 1
     # n, h, w, d = 250, 128, 128, 82
@@ -97,7 +95,7 @@ if __name__ == "__main__":
     print(f"Memory size of JAX array: {X_raw.nbytes/1_000_000_000} gigabytes")
 
     # Compute the PCA associated transformations
-    transform, recover,singular_values = pca(X_train=X_raw)
+    transform, recover, singular_values = pca(X_train=X_raw)
 
     # demonstrate that they work
     T = transform(X_raw)
