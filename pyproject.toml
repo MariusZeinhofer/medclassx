@@ -9,7 +9,6 @@ test = ["pytest"]
 
 [tool.ruff]
 line-length = 88
-ignore = ["E731"] # E731: Do not assign a lambda expression, use a def
 src = []
 
 [tool.ruff.lint]
@@ -17,6 +16,7 @@ select = ["E501", "I"]
 extend-select = [
   "D",   # pydocstyle
 ]
+ignore = ["E731"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
