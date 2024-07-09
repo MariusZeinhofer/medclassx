@@ -1,54 +1,53 @@
-import pydicom as dicom
+"""Conversion from DICOM to numpy ndarray."""
+
+import warnings
+from pathlib import Path
+
 import numpy as np
+import pydicom as dicom
+
 
 def get_3d_nparray_from_dicoms(files):
-    # skip files with no SliceLocation (eg scout views)
-    files_dicom = []
-    for i, f in enumerate(files):
-        files_dicom.append(dicom.dcmread(f))
-        if i == 0:
-            print(files_dicom[i].SeriesDescription)
+    """Convert DICOM files to numpy array.
 
+    Args:
+        files: An iterable of paths to the DICOMS representing the slices.
 
-    slices = []
-    skipcount = 0
-    for f in files_dicom:
-        
-        # if hasattr(f, 'SliceLocation'): # some exports dont have field SliceLocation
-        if hasattr(f, 'ImagePositionPatient'):
-            slices.append(f)
-        else:
-            skipcount = skipcount + 1
-    
-    print("skipped, no SliceLocation: {}".format(skipcount))
-    # ensure they are in the correct order
-    # slices = sorted(slices, key=lambda s: s.SliceLocation) # some exports dont have field SliceLocation
+    Returns:
+        A tuple consisting of the 3d numpy array and a list of sorted DICOM slices.
+    """
+    # traverse directory
+    files_dicom = [dicom.dcmread(f) for f in files]
+    print(files_dicom[0].SeriesDescription)
+
+    # check for available position in dicom files
+    slices = [f for f in files_dicom if hasattr(f, "ImagePositionPatient")]
+
+    # sort the slices
     slices = sorted(slices, key=lambda s: int(s.ImagePositionPatient[2]))
 
-    # pixel aspects, assuming all slices are the same
-    ps = slices[0].PixelSpacing
-    ss = slices[0].SliceThickness
-    ax_aspect = ps[1]/ps[0]
-    sag_aspect = ps[1]/ss
-    cor_aspect = ss/ps[0]
-    # create 3D array
-    img_shape = list(slices[0].pixel_array.shape)
-    img_shape.append(len(slices))
-    # img_shape.reverse()
-    img_shape = [img_shape[2],img_shape[0],img_shape[1]]
-    img3d = np.zeros(img_shape)
-    # img3d = np.zeros(img_shape,dtype='ushort')
-    
-    # fill 3D array with the images from the files
-    for i, s in enumerate(slices):
-        array2d = s.pixel_array
-        if sum(sum(array2d<0)) > 0:
-            print('sum of negative elements in array:',sum(sum(array2d<0)))
-        # print(s.pixel_array.max,s.RescaleSlope)
-        img2d = (array2d * s.RescaleSlope) + s.RescaleIntercept
-        
-        img3d[i, :, :] = img2d
+    # warn in cases of missing SliceLocation
+    if len(files_dicom) - len(slices) > 0:
+        warnings.warn(
+            f"Encountered {len(files_dicom) - len(slices)} slices without "
+            f"SliceLocation.",
+            UserWarning,
+        )
 
-    # img4d = [img3d] # required to simulate a color channel for the CBS scripts, they shrink the array by 1 dimension
-    # img4d = np.array([img3d,img3d,img3d])
+    # assemble 3d arry
+    img3d = np.zeros(shape=(len(slices), *slices[0].pixel_array.shape))
+    for i, s in enumerate(slices):
+        img3d[i, :, :] = (s.pixel_array * s.RescaleSlope) + s.RescaleIntercept
+
     return img3d, slices
+
+
+if __name__ == "__main__":
+    path = Path(r"data\10000002")
+    files = []
+    for p in path.iterdir():
+        files.append(p)
+
+    tensor, slices = get_3d_nparray_from_dicoms(files)
+    print(tensor.shape)
+    print(type(slices))
