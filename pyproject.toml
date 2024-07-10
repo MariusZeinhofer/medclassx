@@ -7,6 +7,9 @@ description = "Medical image analysis with jax."
 lint = ["ruff"]
 test = ["pytest"]
 
+[tool.setuptools]
+packages = ["medclassx"]
+
 [tool.ruff]
 line-length = 88
 src = []
