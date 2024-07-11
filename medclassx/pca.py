@@ -75,7 +75,7 @@ def pca(X_train):
         """
         return T @ W.transpose()
 
-    return transform, recover, singular_values
+    return transform, recover, singular_values, W
 
 
 if __name__ == "__main__":
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     print(f"Memory size of JAX array: {X_raw.nbytes/1_000_000_000} gigabytes")
 
     # Compute the PCA associated transformations
-    transform, recover, singular_values = pca(X_train=X_raw)
+    transform, recover, singular_values, W = pca(X_train=X_raw)
 
     # demonstrate that they work
     T = transform(X_raw)
