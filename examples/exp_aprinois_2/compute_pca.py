@@ -1,15 +1,35 @@
-"""Compute the principle components of the PSP-RS and healthy control dataset."""
+"""Performs PCA-regression on the PSP-RS and healthy control dataset.
 
+This script transforms and normalizes the dataset and computes the principle
+components. It saves the following files:
+
+- the first `cut_off` principle components in image space. That means
+    it unmasks the files and transforms them back to volumetric format and saves
+    them in the nifti format. This is done both for the z-score normalized PCs and
+    for the unnormalized ones. These files are for visual inspection mainly.
+
+- For every principle component it saves a json file that contains the principle
+    component in masked vector form. It does this both for z-score normalized values
+    and non-normalized values. Other information contained in each json file (one for
+    each principle component) is the "pc_number", the singular value "sv" the variance
+    accounted for "vaf" (singular_value/sum of singular values), the "accuracy", the
+    principle component "pc" and the z-score normalized principle component "z_pc".
+    Keys for the json: {"pc_number", "sv", "vaf", "accuracy", "pc", "pcz"}.
+"""
+
+import json
 import nibabel
 import jax.numpy as jnp
 from openpyxl import load_workbook
 from pathlib import Path
 
-from medclassx.pca import pca
+from medclassx.binary_pca_regression import binary_pca_regression
 from medclassx.mask_trafo import mask_vector
 
 #########################PREPARE DATA ACCESS###########################################
 # goal: obtain a list that contains all paths to the data
+
+print("Prepare data access.")
 
 # path to the excel document
 path = Path(r"data\aprinois_nuk_data\TAU-PM-PBB3_Scores_gb_18122023_jb.xlsx")
@@ -54,6 +74,8 @@ paths = hcs_paths + psp_paths
 
 #############################PREPARE MASKING###########################################
 
+print("Load mask.")
+
 # path to mask
 mask_path = Path(r"data\aprinois_nuk_data\mask_for_scanvp.nii")
 
@@ -68,6 +90,8 @@ mask = mask.reshape(-1)
 
 #############################PREPARE DATASET###########################################
 
+print("Mask, shift, log tranform and double center data.")
+
 # load the images with nibabel
 nifti_imgs = [nibabel.load(p) for p in paths]
 
@@ -76,8 +100,6 @@ img_data = [n.get_fdata() for n in nifti_imgs]
 
 # convert to a single 4-d jax tensor of shape (batch, a, b, c)
 img_data = jnp.array(img_data)
-
-print(f"Data group shape: {jnp.shape(img_data)} and dtype {img_data.dtype}.")
 
 # data shapes
 n, a, b, c = jnp.shape(img_data)
@@ -103,21 +125,30 @@ X -= jnp.mean(X, axis=0, keepdims=True)
 # row center
 X -= jnp.mean(X, axis=1, keepdims=True)
 
-###############################COMPUTE PCA#############################################
+print(f"Done, data of shape: {X.shape}.")
 
-# perform pca
-transform, recover, singular_values, W = pca(X)
+#################################PCA REGRESSION########################################
 
-# Compute the latent data representation
-T = transform(X)
+print("Compute PCA regression.")
 
-print(f"Shape of the latent dataset: {T.shape}")
+# the first 30 are healthy controls
+X_con = X[0:30]
 
-# save the transformed dataset
-jnp.save(Path(r"examples\exp_aprinois\out\latent_data.npy"), T)
+# the remaining 30 are PSP patients
+X_pat = X[30:]
+
+# compute the pca regression
+results = binary_pca_regression(X_control=X_con, X_patient=X_pat, cut_off=20)
+
+print("Done, save results.")
+
+##################################SAVE RESULTS#########################################
+
+# retrieve the principle components from the results list
+pcs = [d["pc"] for d in results]
 
 # get the principle components back to unmasked space
-pcs = [unmask(w) for w in W.transpose()]
+pcs = [unmask(pc) for pc in pcs]
 
 # reshape back to 3d space
 pcs = [jnp.reshape(pc, shape=(a, b, c)) for pc in pcs]
@@ -133,25 +164,46 @@ for i, pc in enumerate(pcs):
 
     nibabel.save(
         pc_to_nifti, 
-        "examples\exp_aprinois\out\pc_" + f"{i+1}" + ".nii",
+        Path("examples\exp_aprinois_2\out\pc_" + f"{i+1}" + ".nii"),
     )
 
+# repeat to save the z-score normalized principle components
+# retrieve the normalized principle components from the results list
+pcs_zscore = [d["pcz"] for d in results]
 
-# Is this the right z-score normalization? What is a sensible reference that 
-# the principle components should be normalized to?
-# repeat the same for z transformed principle components
-pcs_zscore = [unmask((w - jnp.mean(w))/jnp.std(w)) for w in W.transpose()]
+# get the principle components back to unmasked space
+pcs_zscore = [unmask(pcz) for pcz in pcs_zscore]
 
-# reshape to 3d space
-pcs_zscore = [jnp.reshape(pc_z, shape=(a, b, c)) for pc_z in pcs_zscore]
+# reshape back to 3d space
+pcs_zscore = [jnp.reshape(pcz, shape=(a, b, c)) for pcz in pcs_zscore]
 
 # save as niftis for visual inspection
-for i, pc_z in enumerate(pcs_zscore):
+for i, pcz in enumerate(pcs_zscore):
     # totally unclear to me if passing these headers makes any sense!
-    pc_to_nifti = nibabel.Nifti1Image(
-        pc_z,
+    pcz_to_nifti = nibabel.Nifti1Image(
+        pcz,
         affine=nifti_imgs[1].affine,
         header=nifti_imgs[1].header,
     )
 
-    nibabel.save(pc_to_nifti, "examples\exp_aprinois\out\zscore_pc_" + f"{i+1}" + ".nii")
+    nibabel.save(
+        pcz_to_nifti, 
+        Path("examples\exp_aprinois_2\out\zscore_pc_" + f"{i+1}" + ".nii"),
+    )
+
+# save principle components and metadata as json file
+for i, d in enumerate(results):
+    
+    # jax and numpy arrays cannot be saved in a json file, use list instead
+    d_ser = {k: (v.tolist() if hasattr(v, "tolist") else v) for k, v in d.items()}
+    
+    #d_serializable = {}
+    #for k, v in d.items():
+    #    
+    #    if hasattr(v, "tolist"):
+    #        d_serializable[k] = v.tolist()
+    #    else:
+    #        d_serializable[k] = v
+
+    with open(Path(r"examples\exp_aprinois_2\out\pc_" + f"{i+1}.json"), "w") as j_file:
+        json.dump(d_ser, j_file)

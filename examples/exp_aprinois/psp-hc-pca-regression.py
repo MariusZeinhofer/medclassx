@@ -1,11 +1,11 @@
-"""Compute the principle components of the PSP-RS and healthy control dataset."""
+"""Performs PCA-regression on the PSP-RS and healthy control dataset."""
 
 import nibabel
 import jax.numpy as jnp
 from openpyxl import load_workbook
 from pathlib import Path
 
-from medclassx.pca import pca
+from medclassx.binary_pca_regression import binary_pca_regression
 from medclassx.mask_trafo import mask_vector
 
 #########################PREPARE DATA ACCESS###########################################
@@ -103,21 +103,23 @@ X -= jnp.mean(X, axis=0, keepdims=True)
 # row center
 X -= jnp.mean(X, axis=1, keepdims=True)
 
-###############################COMPUTE PCA#############################################
 
-# perform pca
-transform, recover, singular_values, W = pca(X)
+#################################PCA REGRESSION########################################
 
-# Compute the latent data representation
-T = transform(X)
+# the first 30 are healthy controls
+X_con = X[0:30]
 
-print(f"Shape of the latent dataset: {T.shape}")
+# the remaining 30 are PSP patients
+X_pat = X[30:]
 
-# save the transformed dataset
-jnp.save(Path(r"examples\exp_aprinois\out\latent_data.npy"), T)
+# compute the pca regression
+results = binary_pca_regression(X_control=X_con, X_patient=X_pat, cut_off=6)
+
+# retrieve the principle components from the results list
+pcs = [d["pc"] for d in results]
 
 # get the principle components back to unmasked space
-pcs = [unmask(w) for w in W.transpose()]
+pcs = [unmask(pc) for pc in pcs]
 
 # reshape back to 3d space
 pcs = [jnp.reshape(pc, shape=(a, b, c)) for pc in pcs]
@@ -133,25 +135,35 @@ for i, pc in enumerate(pcs):
 
     nibabel.save(
         pc_to_nifti, 
-        "examples\exp_aprinois\out\pc_" + f"{i+1}" + ".nii",
+        "examples\exp_aprinois\out\principle_components\pc_" + f"{i+1}" + ".nii",
     )
 
+# repeat to save the z-score normalized principle components
+# retrieve the principle components from the results list
+pcs = [d["pc"] for d in results]
 
-# Is this the right z-score normalization? What is a sensible reference that 
-# the principle components should be normalized to?
-# repeat the same for z transformed principle components
-pcs_zscore = [unmask((w - jnp.mean(w))/jnp.std(w)) for w in W.transpose()]
+# z score normalize
+pcs_zscore = [(pc - jnp.mean(pc))/jnp.std(pc) for pc in pcs]
 
-# reshape to 3d space
-pcs_zscore = [jnp.reshape(pc_z, shape=(a, b, c)) for pc_z in pcs_zscore]
+# get the principle components back to unmasked space
+pcs_zscore = [unmask(pcz) for pcz in pcs_zscore]
+
+# reshape back to 3d space
+pcs_zscore = [jnp.reshape(pcz, shape=(a, b, c)) for pcz in pcs_zscore]
 
 # save as niftis for visual inspection
-for i, pc_z in enumerate(pcs_zscore):
+for i, pcz in enumerate(pcs_zscore):
     # totally unclear to me if passing these headers makes any sense!
-    pc_to_nifti = nibabel.Nifti1Image(
-        pc_z,
+    pcz_to_nifti = nibabel.Nifti1Image(
+        pcz,
         affine=nifti_imgs[1].affine,
         header=nifti_imgs[1].header,
     )
 
-    nibabel.save(pc_to_nifti, "examples\exp_aprinois\out\zscore_pc_" + f"{i+1}" + ".nii")
+    nibabel.save(
+        pcz_to_nifti, 
+        "examples\exp_aprinois\out\principle_components\zscore_pc_" 
+        + f"{i+1}" + ".nii",
+    )
+
+print(results)

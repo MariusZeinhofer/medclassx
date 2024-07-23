@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 
 # the latent data produced by the PCA in psp-hc-pc.py
-T = jnp.load(Path(r"examples\exp_aprinois\out\latent_data.npy"))[:, 2:5]
+T = jnp.load(Path(r"examples\exp_aprinois\out\latent_data.npy"))[:, 1:2]
 
 # the first 30 patients are healthy controls, the last 30 are PSP diagnosed
 y_1 = jnp.zeros(shape=(30,), dtype=int)
@@ -15,7 +15,7 @@ y_2 = jnp.ones(shape=(30,), dtype=int)
 y = jnp.concatenate((y_1, y_2), axis=0)
 
 # Step 3: Split the dataset into training and testing sets
-T_train, T_test, y_train, y_test = train_test_split(T, y, test_size=0.1, random_state=0)
+T_train, T_test, y_train, y_test = train_test_split(T, y, test_size=0.5, random_state=0)
 
 # Step 4: Create and train the logistic regression model
 model = LogisticRegression(max_iter=200)
