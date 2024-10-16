@@ -2,8 +2,8 @@
 
 import jax.numpy as jnp
 import pytest
-
 from medclassx.mask_trafo import mask_vector
+
 
 @pytest.mark.parametrize(
         "v, mask, masked, retrieved",

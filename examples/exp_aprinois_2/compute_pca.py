@@ -18,13 +18,13 @@ components. It saves the following files:
 """
 
 import json
-import nibabel
-import jax.numpy as jnp
-from openpyxl import load_workbook
 from pathlib import Path
 
+import jax.numpy as jnp
+import nibabel
 from medclassx.binary_pca_regression import binary_pca_regression
 from medclassx.mask_trafo import mask_vector
+from openpyxl import load_workbook
 
 #########################PREPARE DATA ACCESS###########################################
 # goal: obtain a list that contains all paths to the data
@@ -125,6 +125,9 @@ X -= jnp.mean(X, axis=0, keepdims=True)
 # row center
 X -= jnp.mean(X, axis=1, keepdims=True)
 
+# save for later use
+jnp.save(Path(r"examples\exp_aprinois_2\out\X.npy"), X)
+
 print(f"Done, data of shape: {X.shape}.")
 
 #################################PCA REGRESSION########################################
@@ -138,14 +141,17 @@ X_con = X[0:30]
 X_pat = X[30:]
 
 # compute the pca regression
-results = binary_pca_regression(X_control=X_con, X_patient=X_pat, cut_off=20)
+results, T = binary_pca_regression(X_control=X_con, X_patient=X_pat, cut_off=20)
 
 print("Done, save results.")
 
 ##################################SAVE RESULTS#########################################
 
+# save the transformed dataset
+jnp.save(Path(r"examples\exp_aprinois_2\out\latent_data.npy"), T)
+
 # retrieve the principle components from the results list
-pcs = [d["pc"] for d in results]
+pcs = [result["pc"] for result in results]
 
 # get the principle components back to unmasked space
 pcs = [unmask(pc) for pc in pcs]
@@ -196,14 +202,6 @@ for i, d in enumerate(results):
     
     # jax and numpy arrays cannot be saved in a json file, use list instead
     d_ser = {k: (v.tolist() if hasattr(v, "tolist") else v) for k, v in d.items()}
-    
-    #d_serializable = {}
-    #for k, v in d.items():
-    #    
-    #    if hasattr(v, "tolist"):
-    #        d_serializable[k] = v.tolist()
-    #    else:
-    #        d_serializable[k] = v
 
     with open(Path(r"examples\exp_aprinois_2\out\pc_" + f"{i+1}.json"), "w") as j_file:
         json.dump(d_ser, j_file)

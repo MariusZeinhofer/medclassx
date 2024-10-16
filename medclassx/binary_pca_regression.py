@@ -3,8 +3,8 @@
 import jax
 import jax.numpy as jnp
 import jax.random as random
-from jax.numpy.linalg import svd
 import numpy as np
+from jax.numpy.linalg import svd
 from matplotlib import pyplot as plt
 from medclassx.pca import pca
 from sklearn.linear_model import LogisticRegression
@@ -30,10 +30,10 @@ def binary_pca_regression(X_patient, X_control, cut_off=2):
         cut_off: The number of principle coponents to consider. Default is to use 5.
 
     Returns:
-        A list of dictionaries. Each dictionary corresponds to one principle component
-            with associated principle component number (pc_number), principle component
-            (pc), singular value (sv), variance accounted for (vaf), and class
-            separation value (p value of suitable t-test).
+        A list of dictionaries and the latents T. Each dictionary corresponds to one 
+            principle component with associated principle component number (pc_number),
+            principle component (pc), singular value (sv), variance accounted for
+            (vaf), and class separation value (p value of suitable t-test).
 
     Raises:
         ValueError: If the number of training samples is larger than the number of
@@ -96,7 +96,7 @@ def binary_pca_regression(X_patient, X_control, cut_off=2):
             }
         )
 
-    return results
+    return results, T
 
 
 if __name__ == "__main__":

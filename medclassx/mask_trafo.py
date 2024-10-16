@@ -2,6 +2,7 @@
 
 import jax.numpy as jnp
 
+
 def mask_vector(v, vector_mask):
     """Removes the entries of v that correspond to zeros of vector_mask.
 

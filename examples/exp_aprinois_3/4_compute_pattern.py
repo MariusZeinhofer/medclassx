@@ -1,5 +1,6 @@
 """Based on the compute_pca.py and visualize_pca.py derives the PCA pattern."""
 
+import argparse
 from pathlib import Path
 
 import jax.numpy as jnp
@@ -7,19 +8,27 @@ import nibabel
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, confusion_matrix
 
+
+parser = argparse.ArgumentParser(description="Provide input and ouput data locations.")
+
+parser.add_argument(
+    "--out_folder",
+    type=str,
+    help="Folder to store output",
+    default="examples/exp_aprinois_3/out",
+)
+args = parser.parse_args()
+
 # choose pcs
 pcs_idx = [2, 5]
 
-# root data path
-root = r"examples\exp_aprinois_2\out"
-
 # the latent data, remember 0 based counting
-T = jnp.load(Path(root + r"\latent_data.npy"))[:, [p-1 for p in pcs_idx]]
+T = jnp.load(Path(args.out_folder) / "T.npy")[:, [p-1 for p in pcs_idx]]
 
 print(T.shape)
 
 # load the principle components
-pcs = [nibabel.load(Path(root + "\zscore_pc_" + f"{pc}" + ".nii")) for pc in pcs_idx]
+pcs = [nibabel.load(Path(args.out_folder) / f"pc_{pc}.nii") for pc in pcs_idx]
 
 # convert to a list of numpy arrays
 pcs = [pc.get_fdata() for pc in pcs]
@@ -61,4 +70,4 @@ print(conf_matrix)
 
 # derive pattern using logistic weights
 pattern = sum([weights[0, i] * pcs[i] for i in range(0, len(pcs))])
-jnp.save(Path(root + "\pattern.npy"), pattern)
+jnp.save(Path(args.out_folder) / "pattern.npy", pattern)

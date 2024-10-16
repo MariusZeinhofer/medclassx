@@ -1,12 +1,12 @@
 """Performs PCA-regression on the PSP-RS and healthy control dataset."""
 
-import nibabel
-import jax.numpy as jnp
-from openpyxl import load_workbook
 from pathlib import Path
 
+import jax.numpy as jnp
+import nibabel
 from medclassx.binary_pca_regression import binary_pca_regression
 from medclassx.mask_trafo import mask_vector
+from openpyxl import load_workbook
 
 #########################PREPARE DATA ACCESS###########################################
 # goal: obtain a list that contains all paths to the data

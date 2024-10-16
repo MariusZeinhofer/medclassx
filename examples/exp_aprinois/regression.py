@@ -1,10 +1,11 @@
 # Step 1: Import necessary libraries
+from pathlib import Path
+
 import jax.numpy as jnp
 import numpy as np
-from pathlib import Path
-from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+from sklearn.model_selection import train_test_split
 
 # the latent data produced by the PCA in psp-hc-pc.py
 T = jnp.load(Path(r"examples\exp_aprinois\out\latent_data.npy"))[:, 1:2]

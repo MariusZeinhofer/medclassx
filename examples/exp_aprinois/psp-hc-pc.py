@@ -1,12 +1,12 @@
 """Compute the principle components of the PSP-RS and healthy control dataset."""
 
-import nibabel
-import jax.numpy as jnp
-from openpyxl import load_workbook
 from pathlib import Path
 
-from medclassx.pca import pca
+import jax.numpy as jnp
+import nibabel
 from medclassx.mask_trafo import mask_vector
+from medclassx.pca import pca
+from openpyxl import load_workbook
 
 #########################PREPARE DATA ACCESS###########################################
 # goal: obtain a list that contains all paths to the data
