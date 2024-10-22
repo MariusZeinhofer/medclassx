@@ -3,8 +3,8 @@
 from pathlib import Path
 
 import jax.numpy as jnp
-import numpy as np
 import nibabel
+import numpy as np
 from medclassx.pca import pca
 
 # path to mask

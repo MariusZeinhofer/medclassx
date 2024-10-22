@@ -12,14 +12,12 @@ packages = ["medclassx"]
 
 [tool.ruff]
 line-length = 88
-src = []
+src = ["medclassx", "examples", "test"]
 
 [tool.ruff.lint]
-select = ["E501", "I"]
-extend-select = [
-  "D",   # pydocstyle
-]
-ignore = ["E731"]
+select = ["E501", "I001"]
+extend-select = ["D"]
+ignore = ["E731"] # lambdas can be assigned
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

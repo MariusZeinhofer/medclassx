@@ -26,7 +26,7 @@ def get_3d_nparray_from_dicoms(files):
     # sort the slices
     slices = sorted(slices, key=lambda s: int(s.ImagePositionPatient[2]))
 
-    # warn in cases of missing SliceLocation
+    # warn in case of missing SliceLocation
     if len(files_dicom) - len(slices) > 0:
         warnings.warn(
             f"Encountered {len(files_dicom) - len(slices)} slices without "

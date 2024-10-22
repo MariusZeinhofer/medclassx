@@ -2,6 +2,7 @@
 
 import jax.numpy as jnp
 
+
 def mask_vector(v, vector_mask):
     """Removes the entries of v that correspond to zeros of vector_mask.
 
@@ -18,16 +19,18 @@ def mask_vector(v, vector_mask):
     """
     non_zero_idxs = jnp.nonzero(vector_mask)
 
-    def unmask(w):
+    def unmask(w, padding=0):
         """Transforms w back to the shape of v, padds masked fields with zero.
         
         Args:
             w: Array of shape (p-#zeros_of_vector_mask,)
 
+            padding: value used to pad when unmasking is done.
+
         Returns:
             A vector of the shape of v with nonzero entries where vector_mask is not 0.
         """
-        v_zeros = jnp.zeros_like(v)
+        v_zeros = padding * jnp.ones_like(v)
         return v_zeros.at[non_zero_idxs].set(w)
 
     return v[non_zero_idxs], unmask
