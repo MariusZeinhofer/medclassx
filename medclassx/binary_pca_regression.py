@@ -92,7 +92,8 @@ def binary_pca_regression(X_patient, X_control, cut_off=2):
                 "vaf": vaf,
                 "accuracy": accuracy,
                 "pc": W[:, i],
-                "pcz": pcz,
+                "pcz": W[:, i],
+                #"pcz": pcz,
             }
         )
 

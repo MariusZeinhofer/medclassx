@@ -88,13 +88,13 @@ cmap = custom_cmap
 def rotate_180(array):
      return np.flipud(np.fliplr(array))
 
-for i in range(0, 18):
+for i in range(0, 19):
     path = outfolder / f"zscore_pc_{i+1}.nii"
     nifti_img = nibabel.load(path)
     data = nifti_img.get_fdata()
 
     a, b, c = data.shape
-    data = -data.reshape(-1)
+    data = data.reshape(-1)
 
     mask = nibabel.load(outfolder / "mask_resampled.nii").get_fdata()
     mask = mask.reshape(-1)
@@ -148,7 +148,7 @@ for i in range(0, 18):
     # Remove unnecessary space around the image and colorbar
     plt.subplots_adjust(left=0, right=1, top=0.95, bottom=0.11)
 
-    plt.savefig(outfolder / f"invert_pc_{i+1}_5x6.png", bbox_inches="tight", pad_inches=0)
+    plt.savefig(outfolder / f"pc_{i+1}_5x6.png", bbox_inches="tight", pad_inches=0)
     plt.close()
 
 
@@ -167,7 +167,7 @@ for i in range(0, 18):
 
 ####################################PC SLICES##########################################
 
-for i in range(0, 18):
+for i in range(0, 19):
     path = outfolder / f"zscore_pc_{i+1}.nii"
     nifti_img = nibabel.load(path)
     img = nifti_img.get_fdata()
